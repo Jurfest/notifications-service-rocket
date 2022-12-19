@@ -1,6 +1,5 @@
 import { Content } from '@application/entities/notification/content';
 import { Notification } from '@application/entities/notification/notification';
-import { NotificationsRepository } from '@application/repositories/notifications-repository/notifications-repository';
 import { InMemoryNotificationsRepository } from '@test/repositories/in-memory-notifications-repository';
 
 import { CancelNotification } from './cancel-notification';
