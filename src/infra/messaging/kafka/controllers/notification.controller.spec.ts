@@ -1,4 +1,7 @@
+import { SendNotification } from '@application/use-cases/send-notification';
+import { DatabaseModule } from '@infra/database/database.module';
 import { Test, TestingModule } from '@nestjs/testing';
+
 import { NotificationController } from './notification.controller';
 
 describe('NotificationController', () => {
@@ -6,7 +9,9 @@ describe('NotificationController', () => {
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
+      imports: [DatabaseModule],
       controllers: [NotificationController],
+      providers: [SendNotification],
     }).compile();
 
     controller = module.get<NotificationController>(NotificationController);
