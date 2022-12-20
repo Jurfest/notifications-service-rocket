@@ -1,30 +1,70 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import { CancelNotification } from '@application/use-cases/cancel-notification';
+import { CountNotifications } from '@application/use-cases/count-notifications';
+import { GetNotifications } from '@application/use-cases/get-notifications';
+import { ReadNotification } from '@application/use-cases/read-notification';
+import { UnreadNotification } from '@application/use-cases/unread-notification';
+import { Body, Controller, Get, Param, Patch, Post } from '@nestjs/common';
 import { SendNotification } from 'src/application/use-cases/send-notification';
 
 import { CreateNotificationBody } from '../dtos/create-notification-body';
 import { NotificationViewModel } from '../view-models/notification-view-model';
 
-// import { PrismaPromise } from '@prisma/client';
-// import { randomUUID } from 'node:crypto';
-// import { PrismaService } from '../../prisma/prisma.service';
-
 @Controller('notifications')
 export class NotificationsController {
   constructor(
-    // private readonly prismaService: PrismaService
     private sendNotification: SendNotification,
+    private cancelNotification: CancelNotification,
+    private readNotification: ReadNotification,
+    private unreadNotification: UnreadNotification,
+    private countNotifications: CountNotifications,
+    private getNotifications: GetNotifications,
   ) {}
 
-  // @Get()
-  // list(): PrismaPromise<any> {
-  //   return this.prismaService.notification.findMany();
-  // }
+  @Patch(':id/cancel')
+  async cancel(@Param('id') id: string): Promise<void> {
+    await this.cancelNotification.execute({
+      notificationId: id,
+    });
+  }
+
+  @Get('from/:recipientId')
+  async getNotificationList(
+    @Param('recipientId') recipientId: string,
+  ): Promise<any> {
+    const { notifications } = await this.getNotifications.execute({
+      recipientId,
+    });
+
+    return { notifications: notifications.map(NotificationViewModel.toHTTP) };
+  }
+
+  @Get('count/from/:recipientId')
+  async countNotificationList(
+    @Param('recipientId') recipientId: string,
+  ): Promise<{ count: number }> {
+    const count = await this.countNotifications.execute({
+      userId: recipientId,
+    });
+
+    return count;
+  }
+
+  @Patch(':id/read')
+  async read(@Param('id') id: string): Promise<void> {
+    await this.readNotification.execute({
+      notificationId: id,
+    });
+  }
+
+  @Patch(':id/unread')
+  async unread(@Param('id') id: string): Promise<void> {
+    await this.unreadNotification.execute({
+      notificationId: id,
+    });
+  }
 
   @Post()
-  async create(
-    @Body() body: CreateNotificationBody,
-    // ): Promise<{ notification }> {
-  ): Promise<any> {
+  async create(@Body() body: CreateNotificationBody): Promise<any> {
     const { recipientId, content, category } = body;
 
     const { notification } = await this.sendNotification.execute({
@@ -36,13 +76,5 @@ export class NotificationsController {
     return {
       notification: NotificationViewModel.toHTTP(notification),
     };
-    // await this.prismaService.notification.create({
-    //   data: {
-    //     id: randomUUID(),
-    //     content,
-    //     category,
-    //     recipientId,
-    //   },
-    // });
   }
 }
